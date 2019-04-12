@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -83,6 +84,7 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.entity.ContentLengthStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -168,6 +170,7 @@ public class FetchHTTPRequest {
     protected HttpHost targetHost;
     protected boolean addedCredentials;
     protected HttpHost proxyHost;
+    protected InetSocketAddress socksAddress;
     // make this a member variable so it doesn't get gc'd prematurely
     protected HttpClientConnectionManager connMan;
 
@@ -184,7 +187,6 @@ public class FetchHTTPRequest {
         ProtocolVersion httpVersion = fetcher.getConfiguredHttpVersion();
         String proxyHostname = (String) fetcher.getAttributeEither(curi, "httpProxyHost");
         Integer proxyPort = (Integer) fetcher.getAttributeEither(curi, "httpProxyPort");
-                
         String requestLineUri;
         if (StringUtils.isNotEmpty(proxyHostname) && proxyPort != null) {
             this.proxyHost = new HttpHost(proxyHostname, proxyPort);
@@ -192,6 +194,21 @@ public class FetchHTTPRequest {
             requestLineUri = curi.getUURI().toString();
         } else {
             requestLineUri = curi.getUURI().getEscapedPathQuery();
+        }
+
+        String socksHostname = (String) fetcher.getAttributeEither(curi, "socksProxyHost");
+        Integer socksPort = null;
+
+        try {
+            socksPort = (Integer) fetcher.getAttributeEither(curi, "socksProxyPort");
+        } catch (NumberFormatException e) {
+            // invalid SOCKS5 port - initialisation below will be skipped over
+        }
+
+        // initialise a SOCKS5 socket address if one is requested
+        if (StringUtils.isNotEmpty(socksHostname) && socksPort != null) {
+            this.socksAddress = new InetSocketAddress(socksHostname, socksPort);
+            this.httpClientContext.setAttribute("socket.address", this.socksAddress);
         }
 
         if (curi.getFetchType() == FetchType.HTTP_POST) {
@@ -552,25 +569,36 @@ public class FetchHTTPRequest {
     }
 
     protected HttpClientConnectionManager buildConnectionManager() {
-        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", PlainConnectionSocketFactory.INSTANCE)
-                .register(
-                        "https",
-                        new SSLConnectionSocketFactory(fetcher.sslContext(),
-                                new AllowAllHostnameVerifier()) {
+        Registry<ConnectionSocketFactory> socketFactoryRegistry = null;
 
-                            @Override
-                            public Socket createLayeredSocket(
-                                    final Socket socket, final String target,
-                                    final int port, final HttpContext context)
-                                    throws IOException {
+        if (this.socksAddress != null) {
+            // use our own custom SOCKS5 socket factories
+            socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", new Socks5ConnectionSocketFactory())
+                    .register("https", new Socks5SSLConnectionSocketFactory(SSLContexts.createSystemDefault()))
+                    .build();
+        } else {
+            // fall back to default
+            socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", PlainConnectionSocketFactory.INSTANCE)
+                    .register(
+                            "https",
+                            new SSLConnectionSocketFactory(fetcher.sslContext(),
+                                    new AllowAllHostnameVerifier()) {
 
-                                return super.createLayeredSocket(socket,
-                                        isDisableSNI() ? "" : target, port,
-                                        context);
-                            }
-                        })
-                .build();
+                                @Override
+                                public Socket createLayeredSocket(
+                                        final Socket socket, final String target,
+                                        final int port, final HttpContext context)
+                                        throws IOException {
+
+                                    return super.createLayeredSocket(socket,
+                                            isDisableSNI() ? "" : target, port,
+                                            context);
+                                }
+                            })
+                    .build();
+        }
 
         DnsResolver dnsResolver = new ServerCacheResolver(fetcher.getServerCache());
 
@@ -657,8 +685,8 @@ public class FetchHTTPRequest {
         
         @Override
         public void close() throws IOException {
-        	super.close();
-        	
+            super.close();
+            
             /*
              * Need to do this to avoid "java.io.IOException: RIS already open"
              * on urls that are retried within httpcomponents. Exercised by

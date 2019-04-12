@@ -342,6 +342,31 @@ public class FetchHTTP extends Processor implements Lifecycle {
         kp.put("httpProxyPassword",password);
     }
 
+    public String socksProxyHost() {
+        return (String) kp.get("socksProxyHost");
+    }
+
+    /**
+     * SOCKS 5 proxy host (set only if needed).
+     * @param socksProxyHost
+     */
+    public void socksProxyHost(String socksProxyHost) {
+        kp.put("socksProxyHost", socksProxyHost);
+    }
+
+    public int getSocksProxyPort() {
+        return (int) kp.get("socksProxyPort");
+    }
+
+    /**
+     * SOCKS 5 proxy port (set only if needed).
+     * @param socksProxyPort
+     */
+    public void setSocksProxyPort(int socksProxyPort) {
+        kp.put("socksProxyPort", socksProxyPort);
+    }
+
+
     {
         setMaxFetchKBSec(0); // no limit
     }

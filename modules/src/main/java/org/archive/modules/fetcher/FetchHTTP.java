@@ -40,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -342,7 +343,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
         kp.put("httpProxyPassword",password);
     }
 
-    public String socksProxyHost() {
+    public String getSocksProxyHost() {
         return (String) kp.get("socksProxyHost");
     }
 
@@ -350,7 +351,7 @@ public class FetchHTTP extends Processor implements Lifecycle {
      * SOCKS 5 proxy host (set only if needed).
      * @param socksProxyHost
      */
-    public void socksProxyHost(String socksProxyHost) {
+    public void setSocksProxyHost(String socksProxyHost) {
         kp.put("socksProxyHost", socksProxyHost);
     }
 
@@ -366,6 +367,18 @@ public class FetchHTTP extends Processor implements Lifecycle {
         kp.put("socksProxyPort", socksProxyPort);
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Pattern> getSocksProxyRejectRegexList() {
+        return (List<Pattern>) kp.get("socksProxyRejectRegexList");
+    }
+
+    /**
+     * Domains that should be excluded from being proxied through SOCKS 5.
+     * @return
+     */
+    public void setSocksProxyRejectRegexList(List<Pattern> socksProxyRejectRegexList) {
+        kp.put("socksProxyRejectRegexList", socksProxyRejectRegexList);
+    }
 
     {
         setMaxFetchKBSec(0); // no limit

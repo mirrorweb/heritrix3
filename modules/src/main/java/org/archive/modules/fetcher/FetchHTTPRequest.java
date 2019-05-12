@@ -42,10 +42,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
@@ -171,6 +173,8 @@ public class FetchHTTPRequest {
     protected boolean addedCredentials;
     protected HttpHost proxyHost;
     protected InetSocketAddress socksAddress;
+    // store if we should proxy the URL or not
+    protected boolean socksRejectMatch;
     // make this a member variable so it doesn't get gc'd prematurely
     protected HttpClientConnectionManager connMan;
 
@@ -210,6 +214,22 @@ public class FetchHTTPRequest {
             this.socksAddress = new InetSocketAddress(socksHostname, socksPort);
             this.httpClientContext.setAttribute("socket.address", this.socksAddress);
         }
+
+        // now, check to see if we have any reject regexes to process
+        List<Pattern> socksRejectPatterns = (List<Pattern>) fetcher.getAttributeEither(curi, "socksProxyRejectRegexList");
+        this.socksRejectMatch = false;
+        if(socksRejectPatterns.size() > 0) {
+            // iterate through the regexes
+            for (Pattern p: socksRejectPatterns) {
+                // TODO: check actual request URI, not stringified host
+                boolean matches = p.matcher(this.targetHost.toURI()).matches();
+                if(matches) {
+                    // this request should not be proxied
+                    this.socksRejectMatch = true;
+                }
+            }
+        }
+
 
         if (curi.getFetchType() == FetchType.HTTP_POST) {
             BasicExecutionAwareEntityEnclosingRequest postRequest = new BasicExecutionAwareEntityEnclosingRequest(
@@ -571,7 +591,8 @@ public class FetchHTTPRequest {
     protected HttpClientConnectionManager buildConnectionManager() {
         Registry<ConnectionSocketFactory> socketFactoryRegistry = null;
 
-        if (this.socksAddress != null) {
+        // check for a socks address and no reject regex matches
+        if (this.socksAddress != null && !this.socksRejectMatch) {
             // use our own custom SOCKS5 socket factories
             socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                     .register("http", new Socks5ConnectionSocketFactory())

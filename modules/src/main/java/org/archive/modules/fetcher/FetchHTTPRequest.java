@@ -218,6 +218,12 @@ public class FetchHTTPRequest {
         // now, check to see if we have any reject regexes to process
         List<Pattern> socksRejectPatterns = (List<Pattern>) fetcher.getAttributeEither(curi, "socksProxyRejectRegexList");
         this.socksRejectMatch = false;
+
+        // instantiate an empty list if it doesn't exist
+        if(socksRejectPatterns == null) {
+            socksRejectPatterns = new ArrayList<>();
+        }
+
         if(socksRejectPatterns.size() > 0) {
             // iterate through the regexes
             for (Pattern p: socksRejectPatterns) {

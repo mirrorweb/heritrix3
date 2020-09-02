@@ -255,6 +255,7 @@ public class BdbModule implements Lifecycle, Checkpointable, Closeable, Disposab
     throws DatabaseException, IOException {
         EnvironmentConfig config = new EnvironmentConfig();
         config.setAllowCreate(create);
+        config.setConfigParam(EnvironmentConfig.FREE_DISK, "0");
         config.setLockTimeout(75, TimeUnit.MINUTES); // set to max
 
         if (getCacheSize() > 0) {

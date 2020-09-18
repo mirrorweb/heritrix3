@@ -5,23 +5,26 @@ matrix:
     dist: trusty
   - jdk: openjdk8
   - jdk: openjdk11
-  
 before_install:
- - "export JAVA_OPTS=-Xmx1500m"
- - "echo JAVA_OPTS=$JAVA_OPTS"
- - "export MAVEN_OPTS=-Xmx1500m"
- - "echo MAVEN_OPTS=$MAVEN_OPTS"
- - "export _JAVA_OPTIONS=-Xmx1500m"
- - "echo _JAVA_OPTIONS=$_JAVA_OPTIONS"
- 
+- export JAVA_OPTS=-Xmx1500m
+- echo JAVA_OPTS=$JAVA_OPTS
+- export MAVEN_OPTS=-Xmx1500m
+- echo MAVEN_OPTS=$MAVEN_OPTS
+- export _JAVA_OPTIONS=-Xmx1500m
+- echo _JAVA_OPTIONS=$_JAVA_OPTIONS
 install: mvn dependency:resolve -B -V
-
 cache:
   directories:
-  - $HOME/.m2
-
+  - "$HOME/.m2"
 script:
- - travis_wait 30 mvn install
-
+- travis_wait 30 mvn install
 after_failure:
-  - cat */target/surefire-reports/*.txt
+- cat */target/surefire-reports/*.txt
+deploy:
+  provider: releases
+  api_key:
+    secure: qMpdK3sAgFk4a+XNgqw4iy1nrMaARG6qsUzxto0G3Re7KkzBcwAunQt4Ep4XCi9RwCzF0PJLVVWY6kLmdTWcBLgDmjmYJhFgIwaVUJigqxCIi1q6rOclNUsxT9qvaIAUFD7gjGWIVCnp8OZcy0lepVc69qKb274tkC/NV5zaU8LDsrp5eWPQBaPAtNchPw/bSVSpGJCnUYU5G/fQUGxEivpFTvF6v7t7Gd2g7rZ9qAofARXhwhSf5+dFLBY8k2szv6MsGsF07XBHuF/NI1bR9U4am/ImStt9ZQYcOzJl8Y7kIEWBuNp0abDZ8a+5ZAMfsexyDV9M9Kk7dZhj+mkHD5iaRgkrGkrAQ16XI6+vbQAEocIfGVZA0rn7EN4Lz7np6t30NMeqgT44pGsRG/7p75sD6XWFxgGnS/S89Lri74pE+ysImBBG45KXzmPcfg6iu99e7/KGKzn9/Jy3d+cARgMIUmpt8pT9GDxBqR29BHBLCsY9VrrwmUoOHEjNPxVv5UwvnslIvkvBgQk+EpuVEXhaRrDbD/f9omUIMtLaROVAOiKoUyETFalzMiWJfa0kPS6qG3q83CUaL6Jxi8qDtIN97AUqa3eekDg+UjAXFHWo9hrgFmU7cw9jQi8auvEzRYCyk8gL/EbuNayUrZcKbvOwEj4eRW57WmPy/z3Mu6s=
+  file: dist/target/heritrix-*.zip
+  on:
+    repo: mirrorweb/heritrix3
+  skip_cleanup: 'true'

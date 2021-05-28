@@ -1,11 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/internetarchive/heritrix3/tree/HEAD)
+## [3.4.0-20210527](https://github.com/internetarchive/heritrix3/tree/3.4.0-20210527) (2021-05-27)
 
-[Full Changelog](https://github.com/internetarchive/heritrix3/compare/3.4.0-20200518...HEAD)
+[Full Changelog](https://github.com/internetarchive/heritrix3/compare/3.4.0-20200518...3.4.0-20210527)
 
 **Fixed bugs:**
 
+- Upgrade dnsjava to cope with Azure CNAME lists [\#344](https://github.com/internetarchive/heritrix3/issues/344)
 - Spring instanciation broken for MatchesListRegexDecideRule [\#337](https://github.com/internetarchive/heritrix3/issues/337)
 
 **Closed issues:**
@@ -16,10 +17,14 @@
 - Heritrix 3.3 out-of-the-box archives pages with meta noindex [\#351](https://github.com/internetarchive/heritrix3/issues/351)
 - Error Binding hostname or ip to Web UI [\#339](https://github.com/internetarchive/heritrix3/issues/339)
 - Add support for the SFTP protocol [\#319](https://github.com/internetarchive/heritrix3/issues/319)
+- java.nio.BufferUnderflowException in BdbMultipleWorkQueues.get [\#278](https://github.com/internetarchive/heritrix3/issues/278)
 - Upgrade dependencies to spring 4.x.x [\#254](https://github.com/internetarchive/heritrix3/issues/254)
 
 **Merged pull requests:**
 
+- Update changelog. [\#390](https://github.com/internetarchive/heritrix3/pull/390) ([anjackson](https://github.com/anjackson))
+- Update dependencies 2021 05 26 [\#389](https://github.com/internetarchive/heritrix3/pull/389) ([anjackson](https://github.com/anjackson))
+- Bring changlog up to date [\#386](https://github.com/internetarchive/heritrix3/pull/386) ([anjackson](https://github.com/anjackson))
 - Allow tuning of BDB-JE evictor and cleaner threads. [\#384](https://github.com/internetarchive/heritrix3/pull/384) ([anjackson](https://github.com/anjackson))
 - Update to latest version of dnsjava, for \#344 [\#383](https://github.com/internetarchive/heritrix3/pull/383) ([anjackson](https://github.com/anjackson))
 - Avoid error when bean properties have no url available [\#379](https://github.com/internetarchive/heritrix3/pull/379) ([ldko](https://github.com/ldko))
